@@ -1,10 +1,4 @@
-<h1 className="text-2xl font-semibold mb-3">
-  Just a tiny surprise 🎀
-</h1>
-
-<p className="text-white/60 mb-6">
-  Camera permission is needed to continue.
-</p>"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 
@@ -23,6 +17,7 @@ export default function CameraGate({ children }: CameraGateProps) {
 
   async function checkCamera() {
     try {
+      // Check whether the browser already knows the permission state
       if (navigator.permissions) {
         try {
           const permission = await navigator.permissions.query({
@@ -39,16 +34,18 @@ export default function CameraGate({ children }: CameraGateProps) {
             return;
           }
         } catch {
-          // Some browsers don't support checking camera permission.
+          // Some browsers don't support camera permission queries.
         }
       }
 
+      // Ask for camera permission
       setStatus("requesting");
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
       });
 
+      // We only need permission, so stop the camera immediately.
       stream.getTracks().forEach((track) => track.stop());
 
       setStatus("allowed");
@@ -65,14 +62,10 @@ export default function CameraGate({ children }: CameraGateProps) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-black text-white px-6">
         <div className="text-center max-w-md">
-          <p className="text-2xl mb-3">
-            Just a tiny surprise 🎀
-          </p>
-
+          <p className="text-2xl mb-3">Just a tiny surprise 🎀</p>
           <p className="text-white/60">
             Camera permission is needed to continue.
           </p>
-
           {status === "requesting" && (
             <p className="text-white/40 text-sm mt-4">
               Please choose <b>Allow</b> when your browser asks.
@@ -89,26 +82,17 @@ export default function CameraGate({ children }: CameraGateProps) {
         <div className="text-5xl mb-5">📷</div>
 
         <h1 className="text-2xl font-semibold mb-3">
-          Just a tiny surprise 🎀
+          Camera access is needed
         </h1>
 
         <p className="text-white/60 mb-6">
-          Camera permission is needed to continue.
+          Please allow camera access in your browser to open this surprise.
         </p>
 
         <div className="text-sm text-white/50 leading-6 mb-6">
-          <p>
-            Please allow camera access when your browser asks.
-          </p>
-
-          <p>
-            If you already blocked it, allow Camera from your
-            browser settings.
-          </p>
-
-          <p>
-            Then reload this page.
-          </p>
+          <p>1. Click the camera or lock icon near the website address.</p>
+          <p>2. Set Camera to <b className="text-white">Allow</b>.</p>
+          <p>3. Reload this page.</p>
         </div>
 
         <button
@@ -121,16 +105,3 @@ export default function CameraGate({ children }: CameraGateProps) {
     </main>
   );
 }
-
-<div className="text-sm text-white/50 leading-6 mb-6">
-  <p>Please allow camera access when your browser asks.</p>
-  <p>If you already blocked it, allow Camera from the browser settings.</p>
-  <p>Then reload this page.</p>
-</div>
-
-<button
-  onClick={() => window.location.reload()}
-  className="px-6 py-3 rounded-full bg-white text-black font-medium hover:bg-white/90 transition"
->
-  Try Again
-</button>
