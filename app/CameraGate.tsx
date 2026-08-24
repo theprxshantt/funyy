@@ -2,90 +2,105 @@
 
 import { useEffect, useState } from "react";
 
-export default function CameraGate({
-  children,
-}: {
+type CameraGateProps = {
   children: React.ReactNode;
-}) {
-  const [allowed, setAllowed] = useState(false);
-  const [denied, setDenied] = useState(false);
+};
+
+export default function CameraGate({ children }: CameraGateProps) {
+  const [status, setStatus] = useState<
+    "checking" | "requesting" | "allowed" | "denied"
+  >("checking");
 
   useEffect(() => {
-    async function requestCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-
-        // Camera was allowed.
-        // We don't keep the camera running.
-        stream.getTracks().forEach((track) => track.stop());
-
-        setAllowed(true);
-      } catch {
-        setDenied(true);
-      }
-    }
-
-    requestCamera();
+    checkCamera();
   }, []);
 
-  if (allowed) {
+  async function checkCamera() {
+    try {
+      // Check whether the browser already knows the permission state
+      if (navigator.permissions) {
+        try {
+          const permission = await navigator.permissions.query({
+            name: "camera" as PermissionName,
+          });
+
+          if (permission.state === "denied") {
+            setStatus("denied");
+            return;
+          }
+
+          if (permission.state === "granted") {
+            setStatus("allowed");
+            return;
+          }
+        } catch {
+          // Some browsers don't support camera permission queries.
+        }
+      }
+
+      // Ask for camera permission
+      setStatus("requesting");
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+      });
+
+      // We only need permission, so stop the camera immediately.
+      stream.getTracks().forEach((track) => track.stop());
+
+      setStatus("allowed");
+    } catch {
+      setStatus("denied");
+    }
+  }
+
+  if (status === "allowed") {
     return <>{children}</>;
   }
 
-  return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
-      <div className="text-center max-w-md">
+  if (status === "checking" || status === "requesting") {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-black text-white px-6">
+        <div className="text-center max-w-md">
+          <p className="text-2xl mb-3">Just a tiny surprise 🎀</p>
+          <p className="text-white/60">
+            Camera permission is needed to continue.
+          </p>
+          {status === "requesting" && (
+            <p className="text-white/40 text-sm mt-4">
+              Please choose <b>Allow</b> when your browser asks.
+            </p>
+          )}
+        </div>
+      </main>
+    );
+  }
 
-        <div className="text-6xl mb-6">
-          📷
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-black text-white px-6">
+      <div className="text-center max-w-md">
+        <div className="text-5xl mb-5">📷</div>
+
+        <h1 className="text-2xl font-semibold mb-3">
+          Camera access is needed
+        </h1>
+
+        <p className="text-white/60 mb-6">
+          Please allow camera access in your browser to open this surprise.
+        </p>
+
+        <div className="text-sm text-white/50 leading-6 mb-6">
+          <p>1. Click the camera or lock icon near the website address.</p>
+          <p>2. Set Camera to <b className="text-white">Allow</b>.</p>
+          <p>3. Reload this page.</p>
         </div>
 
-        {!denied ? (
-          <>
-            <h1 className="text-2xl font-semibold mb-4">
-              One Little Thing First...
-            </h1>
-
-            <p className="text-gray-400 leading-7">
-              Please allow camera access to continue.
-            </p>
-
-            <p className="text-pink-400 mt-6 animate-pulse">
-              Waiting for permission...
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="text-2xl font-semibold mb-4">
-              Camera Access Required
-            </h1>
-
-            <p className="text-gray-400 leading-7">
-              Please allow camera access in your browser,
-              then try again.
-            </p>
-
-            <button
-              onClick={() => window.location.reload()}
-              className="
-                mt-8
-                px-7
-                py-3
-                rounded-full
-                bg-pink-500
-                text-white
-                font-medium
-                hover:bg-pink-400
-                transition
-              "
-            >
-              Try Again
-            </button>
-          </>
-        )}
-
+        <button
+          onClick={() => window.location.reload()}
+          className="px-6 py-3 rounded-full bg-white text-black font-medium hover:bg-white/90 transition"
+        >
+          Try Again
+        </button>
       </div>
     </main>
   );
