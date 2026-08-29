@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import CameraGate from "./CameraGate";
+import LeaveSiteProtection from "./LeaveSiteProtection";
 
 export const metadata: Metadata = {
   title: "Made Just For U 🎀",
@@ -16,6 +17,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <CameraGate>
+          <LeaveSiteProtection />
           {children}
         </CameraGate>
       </body>
